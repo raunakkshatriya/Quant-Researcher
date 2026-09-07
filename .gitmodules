@@ -1,0 +1,6 @@
+[submodule ".claude/skills/claude-trading-skills"]
+	path = .claude/skills/claude-trading-skills
+	url = https://github.com/agiprolabs/claude-trading-skills
+[submodule ".claude/skills/cbt-framework"]
+	path = .claude/skills/cbt-framework
+	url = https://github.com/Trade-With-Claude/cbt-framework
