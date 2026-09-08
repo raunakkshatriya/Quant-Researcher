@@ -1,95 +1,106 @@
-"""Unit tests for price history loader."""
+"""Unit tests for price history loader — tests the real function via a
+mocked yfinance.download() call, since live network access to Yahoo
+Finance isn't available in every environment this runs in."""
+from unittest.mock import patch
 
 import pandas as pd
+import pytest
+
+from src.data.price_history import fetch_price_history
 
 
-# SMALL test fixture — 3 tickers, 10 days
-TICKERS = ["AAPL", "MSFT", "NVDA"]
-START_DATE = pd.to_datetime("2026-08-30").date()  # Fixed to allow proper date range test
-END_DATE = pd.to_datetime("2026-09-08").date()
+def _make_mock_yf_response(tickers, dates):
+    """Build a DataFrame matching yfinance's real multi-ticker,
+    group_by='ticker' output shape: MultiIndex columns of
+    (ticker, field), DatetimeIndex named 'Date'."""
+    fields = ["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    columns = pd.MultiIndex.from_product([tickers, fields])
+    index = pd.DatetimeIndex(dates, name="Date")
+    data = {}
+    for i, ticker in enumerate(tickers):
+        base = 100.0 + i * 50
+        for j, field in enumerate(fields[:-1]):  # price fields
+            data[(ticker, field)] = [base + d_i + j for d_i in range(len(dates))]
+        data[(ticker, "Volume")] = [1_000_000 + d_i * 1000 for d_i in range(len(dates))]
+    return pd.DataFrame(data, index=index, columns=columns)
 
 
-def create_small_fixture():
-    """Create a small test fixture with mock data (no network)."""
-
-    import hashlib
-    from datetime import date, timedelta
-
-    # Pre-compute all dates (10 days starting from START_DATE)
-    start_date_obj = pd.to_datetime("2026-08-30").date()
-    end_date_obj = pd.to_datetime("2026-09-08").date()
-    all_dates = [start_date_obj + timedelta(days=i) for i in range(10)]
-
-    rows = []
-
-    for ticker in sorted(TICKERS):
-        for day_offset in range(10):
-            date_val = all_dates[day_offset]
-
-            # Hash string for consistent variation (use single arg)
-            ticker_hash = int(hashlib.md5(ticker.encode()).hexdigest(), 16) % 100
-
-            rows.append({
-                "date": date_val,
-                "ticker": ticker,
-                "open": 100 + day_offset * 2 + ticker_hash % 10,
-                "high": 102 + day_offset * 2 + ticker_hash % 10,
-                "low": 98 + day_offset * 2 + ticker_hash % 10,
-                "close": 101 + day_offset * 2 + ticker_hash % 10,
-                "adj_close": 99.5 + day_offset * 2 + ticker_hash % 10,
-                "volume": 1_000_000 + (int(hashlib.md5(f"{date_val}_{ticker}".encode()).hexdigest(), 16) % 500_000),
-            })
-
-    return pd.DataFrame(rows)
+@pytest.fixture
+def tickers():
+    return ["AAPL", "MSFT", "NVDA"]
 
 
-def test_returns_dataframe_with_correct_columns():
+@pytest.fixture
+def dates():
+    return pd.date_range("2026-08-30", periods=10, freq="D")
+
+
+def test_returns_dataframe_with_correct_columns(tickers, dates):
     """Returns a DataFrame with the 8 expected columns."""
-    df = create_small_fixture()
+    mock_response = _make_mock_yf_response(tickers, dates)
+    with patch("src.data.price_history.yf.download", return_value=mock_response):
+        with patch("os.path.exists", return_value=False), patch("pandas.DataFrame.to_parquet"):
+            df = fetch_price_history(tickers, start_date="2026-08-30", end_date="2026-09-08")
 
     expected_columns = ["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]
-    assert set(df.columns) == set(expected_columns), f"Expected columns {expected_columns}, got {list(df.columns)}"
+    assert list(df.columns) == expected_columns
 
 
-def test_every_requested_ticker_appears():
+def test_every_requested_ticker_appears(tickers, dates):
     """Every requested ticker appears at least once in the ticker column."""
-    df = create_small_fixture()
+    mock_response = _make_mock_yf_response(tickers, dates)
+    with patch("src.data.price_history.yf.download", return_value=mock_response):
+        with patch("os.path.exists", return_value=False), patch("pandas.DataFrame.to_parquet"):
+            df = fetch_price_history(tickers, start_date="2026-08-30", end_date="2026-09-08")
 
-    for ticker in TICKERS:
+    for ticker in tickers:
         assert ticker in df["ticker"].values, f"Ticker {ticker} not found in dataframe"
 
 
-def test_no_duplicate_date_ticker_pairs():
+def test_no_duplicate_date_ticker_pairs(tickers, dates):
     """No duplicate (date, ticker) pairs."""
-    df = create_small_fixture()
+    mock_response = _make_mock_yf_response(tickers, dates)
+    with patch("src.data.price_history.yf.download", return_value=mock_response):
+        with patch("os.path.exists", return_value=False), patch("pandas.DataFrame.to_parquet"):
+            df = fetch_price_history(tickers, start_date="2026-08-30", end_date="2026-09-08")
 
-    duplicates = df[(df.duplicated(subset=["date", "ticker"], keep=False))]
+    duplicates = df[df.duplicated(subset=["date", "ticker"], keep=False)]
     assert len(duplicates) == 0, f"Found {len(duplicates)} duplicate (date, ticker) pairs"
 
 
-def test_all_dates_within_start_end_range():
+def test_all_dates_within_start_end_range(tickers, dates):
     """All returned dates fall within [start_date, end_date]."""
-    df = create_small_fixture()
+    mock_response = _make_mock_yf_response(tickers, dates)
+    start = pd.to_datetime("2026-08-30").date()
+    end = pd.to_datetime("2026-09-08").date()
+    with patch("src.data.price_history.yf.download", return_value=mock_response):
+        with patch("os.path.exists", return_value=False), patch("pandas.DataFrame.to_parquet"):
+            df = fetch_price_history(tickers, start_date="2026-08-30", end_date="2026-09-08")
 
-    for _, row in df.iterrows():
-        assert START_DATE <= row["date"] <= END_DATE, f"Date {row['date']} outside [{START_DATE}, {END_DATE}]"
+    assert (df["date"] >= start).all() and (df["date"] <= end).all()
 
 
-def test_date_ticker_sort_order():
+def test_date_ticker_sort_order(tickers, dates):
     """DataFrame is sorted by ticker, then date."""
-    df = create_small_fixture()
+    mock_response = _make_mock_yf_response(tickers, dates)
+    with patch("src.data.price_history.yf.download", return_value=mock_response):
+        with patch("os.path.exists", return_value=False), patch("pandas.DataFrame.to_parquet"):
+            df = fetch_price_history(tickers, start_date="2026-08-30", end_date="2026-09-08")
 
-    ticks_sorted = sorted(df["ticker"].unique())
-    expected_ticks = TICKERS.copy()  # Should be ["AAPL", "MSFT", "NVDA"]
-
-    # Verify tickers are sorted correctly by checking row order (get unique tickers in order)
-    expected_tick_order = ["AAPL", "MSFT", "NVDA"]
-    actual_unique_ticks = []
-    for ticker in df.sort_values(by=["ticker"])["ticker"].tolist():
-        if ticker not in actual_unique_ticks:
-            actual_unique_ticks.append(ticker)
-    assert actual_unique_ticks == expected_tick_order, f"Expected tickers {expected_tick_order}, got {actual_unique_ticks}"
+    assert list(df["ticker"]) == sorted(df["ticker"])
+    for ticker in tickers:
+        sub = df[df["ticker"] == ticker]
+        assert list(sub["date"]) == sorted(sub["date"])
 
 
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
+def test_single_ticker_does_not_raise(dates):
+    """Regression test: a single-ticker request must not hit the
+    undefined-variable bug the previous implementation had in its
+    single-ticker branch."""
+    mock_response = _make_mock_yf_response(["AAPL"], dates)
+    with patch("src.data.price_history.yf.download", return_value=mock_response):
+        with patch("os.path.exists", return_value=False), patch("pandas.DataFrame.to_parquet"):
+            df = fetch_price_history(["AAPL"], start_date="2026-08-30", end_date="2026-09-08")
+
+    assert (df["ticker"] == "AAPL").all()
+    assert len(df) == len(dates)

@@ -1,0 +1,15 @@
+{
+  "window": 100,
+  "start_date": "2022-01-01",
+  "end_date": "2026-07-31",
+  "n_tickers_requested": 50,
+  "n_tickers_with_data": 50,
+  "total_return_pct": 38.24196289101378,
+  "benchmark_return_pct": 176.71863094645812,
+  "sharpe_ratio": 0.6646699647158393,
+  "sortino_ratio": 0.9215217263106212,
+  "max_drawdown_pct": 17.27256932545689,
+  "win_rate_pct": 15.851192883137887,
+  "total_trades": 2523,
+  "total_orders": 2526
+}

@@ -1,4 +1,8 @@
 """Price history loader — fetches OHLCV data in long format."""
+import os
+
+import pandas as pd
+import yfinance as yf
 
 
 def fetch_price_history(
@@ -21,13 +25,6 @@ def fetch_price_history(
     Cache: Result is cached to src/data/.cache/price_history_{start_date}_{end_or_latest}.parquet
             keyed on the date range (not on the specific ticker list).
     """
-    import os
-    from datetime import datetime
-
-    import pandas as pd
-    import yfinance as yf
-
-    # Determine cache key based on date range
     if end_date is None:
         end_date = "2030-12-31"  # Future date to ensure we get latest data
         cache_key_suffix = "latest"
@@ -40,74 +37,55 @@ def fetch_price_history(
         f"price_history_{start_date}_{cache_key_suffix}.parquet",
     )
 
-    # Try to load from cache first
     if os.path.exists(cache_file):
         return pd.read_parquet(cache_file)
 
-    # Fetch data from yfinance in a single batched call
     try:
         data = yf.download(
             tickers,
             start=start_date,
-            end=end_date if end_date else None,
+            end=end_date,
             group_by="ticker",
             auto_adjust=False,
         )
     except Exception as e:
-        # If yfinance fails completely, raise a clear error
         raise RuntimeError(f"Failed to fetch price history from yfinance: {e}")
 
-    # Handle single ticker or multiple tickers (MultiIndex case)
-    if isinstance(data.columns, pd.MultiIndex):
-        # Multiple tickers — reshape into long format
-        data = data.reset_index()  # ticker becomes a column
-        df_long = []
+    if data.empty:
+        return pd.DataFrame(
+            columns=["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]
+        )
 
-        for ticker in data["ticker"].unique():
-            ticker_data = data[data["ticker"] == ticker].drop(columns=["ticker"])
+    # Normalize to a (ticker, field) MultiIndex on columns even for a single
+    # ticker, so there is exactly one reshape path below, not a separate
+    # single-vs-multi branch (the previous version's single-ticker branch
+    # referenced an undefined variable and would have raised NameError).
+    if not isinstance(data.columns, pd.MultiIndex):
+        data.columns = pd.MultiIndex.from_product([tickers, data.columns])
 
-            for idx, row in ticker_data.iterrows():
-                date_val = pd.to_datetime(row["Date"]).date()
+    frames = []
+    for ticker in data.columns.get_level_values(0).unique():
+        ticker_df = data[ticker].copy()
+        ticker_df = ticker_df.reset_index()
+        ticker_df["ticker"] = ticker
+        frames.append(ticker_df)
 
-                df_long.append({
-                    "date": date_val,
-                    "ticker": ticker,
-                    "open": float(row["Open"]) if not pd.isna(row["Open"]) else None,
-                    "high": float(row["High"]) if not pd.isna(row["High"]) else None,
-                    "low": float(row["Low"]) if not pd.isna(row["Low"]) else None,
-                    "close": float(row["Close"]) if not pd.isna(row["Close"]) else None,
-                    "adj_close": float(row["Adj Close"]) if not pd.isna(row["Adj Close"]) else None,
-                    "volume": int(row["Volume"]) if not pd.isna(row["Volume"]) else None,
-                })
-
-        df = pd.DataFrame(df_long)
-    else:
-        # Single ticker or simple case — reshape directly
-        data = data.reset_index(drop=True)
-
-        for idx, row in data.iterrows():
-            date_val = pd.to_datetime(row["Date"]).date()
-
-            df_long.append({
-                "date": date_val,
-                "ticker": str(tickers[idx]),  # ticker is the index
-                "open": float(row["Open"]) if not pd.isna(row["Open"]) else None,
-                "high": float(row["High"]) if not pd.isna(row["High"]) else None,
-                "low": float(row["Low"]) if not pd.isna(row["Low"]) else None,
-                "close": float(row["Close"]) if not pd.isna(row["Close"]) else None,
-                "adj_close": float(row["Adj Close"]) if not pd.isna(row["Adj Close"]) else None,
-                "volume": int(row["Volume"]) if not pd.isna(row["Volume"]) else None,
-            })
-
-        df = pd.DataFrame(df_long)
-
-    # Sort by ticker, then date
+    df = pd.concat(frames, ignore_index=True)
+    df = df.rename(columns={
+        "Date": "date",
+        "Open": "open",
+        "High": "high",
+        "Low": "low",
+        "Close": "close",
+        "Adj Close": "adj_close",
+        "Volume": "volume",
+    })
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+    df = df.dropna(subset=["close"])  # ticker had no trade data on this date
+    df = df[["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]]
     df = df.sort_values(by=["ticker", "date"]).reset_index(drop=True)
 
-    # Check if cache directory exists, create if not
     os.makedirs(os.path.dirname(cache_file), exist_ok=True)
-
-    # Save to cache if not empty
     if len(df) > 0:
         df.to_parquet(cache_file, index=False)
 

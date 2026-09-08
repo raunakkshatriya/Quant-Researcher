@@ -165,3 +165,70 @@ def test_full_pipeline():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+def test_hold_until_signal_change_masks_repeated_values():
+    """A weight held constant across many days should only produce a
+    non-NaN value on the transition day — regression test for the
+    empirically-confirmed daily-rebalancing bug."""
+    from src.strategies.sma_crossover_sp500top50 import hold_until_signal_change
+
+    df = pd.DataFrame({
+        "ticker": ["A"] * 6,
+        "date": pd.date_range("2026-01-01", periods=6),
+        "target_weight_20": [float("nan"), float("nan"), 0.02, 0.02, 0.02, 0.02],
+    })
+    result = hold_until_signal_change(df, window=20)
+
+    non_nan = result["rebalance_weight_20"].notna()
+    assert non_nan.sum() == 1, "Only the transition day should be non-NaN"
+    assert result.loc[non_nan, "date"].iloc[0] == pd.Timestamp("2026-01-03")
+
+
+def test_hold_until_signal_change_direction_flip():
+    """A flip from long to short should re-trigger a non-NaN value on
+    the flip day, not just the initial entry."""
+    from src.strategies.sma_crossover_sp500top50 import hold_until_signal_change
+
+    df = pd.DataFrame({
+        "ticker": ["A"] * 5,
+        "date": pd.date_range("2026-01-01", periods=5),
+        "target_weight_20": [0.02, 0.02, -0.02, -0.02, -0.02],
+    })
+    result = hold_until_signal_change(df, window=20)
+
+    non_nan_dates = result.loc[result["rebalance_weight_20"].notna(), "date"].tolist()
+    assert non_nan_dates == [pd.Timestamp("2026-01-01"), pd.Timestamp("2026-01-03")]
+
+
+def test_hold_until_signal_change_nan_to_nan_is_not_a_change():
+    """Consecutive NaN rows (still in warmup) must not be flagged as a
+    change — NaN != NaN is True by default in pandas and must be
+    guarded against."""
+    from src.strategies.sma_crossover_sp500top50 import hold_until_signal_change
+
+    df = pd.DataFrame({
+        "ticker": ["A"] * 4,
+        "date": pd.date_range("2026-01-01", periods=4),
+        "target_weight_20": [float("nan")] * 4,
+    })
+    result = hold_until_signal_change(df, window=20)
+
+    assert result["rebalance_weight_20"].notna().sum() == 0
+
+
+def test_hold_until_signal_change_per_ticker_isolation():
+    """Ticker B's first real signal must not be suppressed just because
+    ticker A already has a non-NaN value earlier in the sorted frame."""
+    from src.strategies.sma_crossover_sp500top50 import hold_until_signal_change
+
+    df = pd.DataFrame({
+        "ticker": ["A", "A", "B", "B"],
+        "date": pd.to_datetime(["2026-01-01", "2026-01-02"] * 2),
+        "target_weight_20": [0.02, 0.02, -0.02, -0.02],
+    })
+    result = hold_until_signal_change(df, window=20)
+
+    a_rows = result[result["ticker"] == "A"]
+    b_rows = result[result["ticker"] == "B"]
+    assert a_rows["rebalance_weight_20"].notna().sum() == 1
+    assert b_rows["rebalance_weight_20"].notna().sum() == 1

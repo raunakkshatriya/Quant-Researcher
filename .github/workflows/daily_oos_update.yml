@@ -1,0 +1,45 @@
+name: Daily OOS Ledger Update — sma_crossover_sp500top50
+
+# Extends the Phase 2 out-of-sample BACKTEST window by one real trading
+# day at a time. This is NOT live paper trading against a broker --
+# no Alpaca integration exists yet (that's separate, later Phase 3
+# work). This only re-scores the already-verified pipeline against
+# real closing prices as they arrive, so there's enough closed-trade
+# history to eventually make a real Gate 2 call. See
+# research/lessons_learned.md for why this exists.
+
+on:
+  schedule:
+    # 22:00 UTC = 5pm EST / 6pm EDT -- comfortably after the 4pm ET US
+    # market close in either daylight-saving state, same UTC calendar
+    # day as the US trading day (verified directly, no date rollover
+    # at this UTC hour). Day-of-week 1-5 = Monday-Friday.
+    - cron: "0 22 * * 1-5"
+  workflow_dispatch: {}  # allow manual trigger from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  update-ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run OOS ledger update
+        run: python research/sma_crossover_sp500top50/update_oos_ledger.py
+
+      - name: Commit updated ledger (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add research/sma_crossover_sp500top50/oos_ledger.csv
+          git diff --staged --quiet || git commit -m "oos-ledger: $(date -u +%Y-%m-%d) update for sma_crossover_sp500top50"
+          git push

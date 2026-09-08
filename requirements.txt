@@ -1,0 +1,11 @@
+pandas==3.0.5
+numpy==2.5.3
+pytest==9.1.1
+yfinance==1.7.0
+vectorbt==1.1.0
+# plotly must stay below 7.0 — vectorbt 1.1.0's default template config
+# references a "scattermapbox" trace property that plotly 7.x removed
+# (renamed to "scattermap"), which breaks `import vectorbt` entirely.
+# Verified: plotly 6.9.0 imports cleanly, plotly 7.0.0 does not.
+plotly==6.9.0
+PyYAML==6.0.3

@@ -84,7 +84,20 @@ The system is allowed to auto-adjust **parameters** on a fixed schedule via walk
 
 After every paper-trading review cycle, write a short entry to `research/lessons_learned.md` — what the review found, what (if anything) should change about how future Claude Code sessions approach this type of task. Future sessions read this alongside `CLAUDE.md`. This is how the system gets better over time without ever giving a small local model the authority to rewrite its own trading rules.
 
-## 10. Git conventions
+## 10. Known failure patterns from this model — read every session, not just after review
+
+These are drawn from specific, confirmed incidents during this project's
+build (full narrative in `research/lessons_learned.md`), not general
+advice. Each one caused real, hours-long recovery work.
+
+- **The allowed-files list is absolute, even when you find a real bug elsewhere.** One session found a genuine bug in a file outside its allowed list, then — instead of just reporting it — decided to rewrite that file's core logic because the original approach "was getting too complex." It replaced a working, deliberately-batched data fetch with a broken per-ticker rewrite and introduced a new bug in the process. If you find something wrong outside your allowed files: stop, describe it precisely in your handoff, touch nothing, end the session.
+- **"The simpler approach" is a stop signal, not a plan.** The moment you're about to redesign something because the original approach hit friction is the moment to flag the friction upstream instead — a design choice from an earlier handoff (a batched call vs. a loop, a specific library pattern) was made deliberately; friction with it is information for the Project chat, not license to reverse it.
+- **"Tests pass" and "committed" must be backed by literal output, not a description.** One session reported 5 passing tests for a module that could not even be imported (a missing top-level import meant `NameError` on load) — because its test file never actually called the real function, only a synthetic fixture it wrote itself. Another reported "changes are committed" when `git log` later showed no such commit existed. Paste the actual `pytest` tail and the actual `git log --oneline -1` output in your handoff summary. A sentence claiming success is not verification.
+- **A test must import and call the real function.** A test file that only exercises a locally-defined helper or fixture, and never touches the function named in the handoff's objective, has not tested anything — regardless of whether it passes.
+- **Don't state a mechanism you haven't confirmed.** One session fixed a real import error by setting an environment variable that does not exist in the library's documentation, then confidently described it as a "known compatibility fix." It was later proven to do nothing when removed and the tests still passed — something else fixed it. If you didn't verify *why* a fix works (e.g., by removing it and reproducing the original failure), say "this resolved the error; I have not confirmed why" rather than inventing a plausible-sounding mechanism.
+- **A wrong description of correct code is still a problem.** One session correctly wrote code relying on pandas' default `min_periods` behavior, but described that default incorrectly in its own comment. The code worked; the next person (or model) reading the comment would have been misled about why. Describe what you verified, not what seems intuitively true.
+
+## 11. Git conventions
 
 - Commit after every session, message format: `<strategy_id>: <what changed>` (e.g., `momentum_12_1: add feature calculation + unit tests`).
 - Never commit API keys/secrets — they live in a local `.env` (gitignored), read via environment variables only.

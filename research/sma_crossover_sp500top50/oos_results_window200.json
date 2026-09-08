@@ -1,0 +1,18 @@
+{
+  "phase": "2_oos",
+  "window": 200,
+  "lookback_start": "2022-01-01",
+  "oos_start_date": "2026-08-01",
+  "oos_end_date": "latest",
+  "n_oos_trading_days": 26,
+  "n_tickers_requested": 50,
+  "n_tickers_with_data": 50,
+  "total_return_pct": 0.06084995238619831,
+  "benchmark_return_pct": 2.786661359535292,
+  "sharpe_ratio": 0.1340914662285563,
+  "sortino_ratio": 0.2021357269832884,
+  "max_drawdown_pct": 3.27239548751357,
+  "win_rate_pct": 0.0,
+  "total_trades": 72,
+  "total_orders": 72
+}
