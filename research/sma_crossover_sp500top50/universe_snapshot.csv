@@ -1,0 +1,51 @@
+ticker,company_name,sector,market_cap_usd,snapshot_date
+NVDA,Nvidia,Semiconductors,5562502742016.0,2026-09-08
+AAPL,Apple Inc.,"Technology Hardware, Storage & Peripherals",4669700046848.0,2026-09-08
+GOOGL,Alphabet Inc. (Class A),Interactive Media & Services,4139343675392.0,2026-09-08
+GOOG,Alphabet Inc. (Class C),Interactive Media & Services,4100819517440.0,2026-09-08
+MSFT,Microsoft,Systems Software,3710545297408.0,2026-09-08
+AMZN,Amazon,Broadline Retail,2788369891328.0,2026-09-08
+AVGO,Broadcom,Semiconductors,1702714146816.0,2026-09-08
+META,Meta Platforms,Interactive Media & Services,1571225468928.0,2026-09-08
+TSLA,"Tesla, Inc.",Automobile Manufacturers,1398455795712.0,2026-09-08
+MU,Micron Technology,Semiconductors,1148129771520.0,2026-09-08
+LLY,Lilly (Eli),Pharmaceuticals,1024490143744.0,2026-09-08
+JPM,JPMorgan Chase,Diversified Banks,953331941376.0,2026-09-08
+WMT,Walmart,Consumer Staples Merchandise Retail,850021580800.0,2026-09-08
+AMD,Advanced Micro Devices,Semiconductors,779621105664.0,2026-09-08
+V,Visa Inc.,Transaction & Payment Processing Services,700273459200.0,2026-09-08
+JNJ,Johnson & Johnson,Pharmaceuticals,663276421120.0,2026-09-08
+XOM,ExxonMobil,Integrated Oil & Gas,655726608384.0,2026-09-08
+MA,Mastercard,Transaction & Payment Processing Services,507393736704.0,2026-09-08
+INTC,Intel,Semiconductors,506408894464.0,2026-09-08
+ORCL,Oracle Corporation,Application Software,457361195008.0,2026-09-08
+ABBV,AbbVie,Biotechnology,453194874880.0,2026-09-08
+BAC,Bank of America,Diversified Banks,438305488896.0,2026-09-08
+CSCO,Cisco,Communications Equipment,430530461696.0,2026-09-08
+PLTR,Palantir Technologies,Internet Services & Infrastructure,418925182976.0,2026-09-08
+CVX,Chevron Corporation,Integrated Oil & Gas,409190465536.0,2026-09-08
+COST,Costco,Consumer Staples Merchandise Retail,406111289344.0,2026-09-08
+LRCX,Lam Research,Semiconductor Materials & Equipment,384968884224.0,2026-09-08
+KO,Coca-Cola Company (The),Soft Drinks & Non-alcoholic Beverages,378925481984.0,2026-09-08
+CAT,Caterpillar Inc.,Construction Machinery & Heavy Transportation Equipment,374147776512.0,2026-09-08
+MRK,Merck & Co.,Pharmaceuticals,370889916416.0,2026-09-08
+AMAT,Applied Materials,Semiconductor Materials & Equipment,360856682496.0,2026-09-08
+UNH,UnitedHealth Group,Managed Health Care,356470816768.0,2026-09-08
+GE,GE Aerospace,Aerospace & Defense,349783064576.0,2026-09-08
+MS,Morgan Stanley,Investment Banking & Brokerage,341943681024.0,2026-09-08
+PG,Procter & Gamble,Personal Care Products,340389986304.0,2026-09-08
+DELL,Dell Technologies,"Technology Hardware, Storage & Peripherals",338669076480.0,2026-09-08
+NFLX,Netflix,Movies & Entertainment,325828280320.0,2026-09-08
+HD,Home Depot (The),Home Improvement Retail,320308248576.0,2026-09-08
+GS,Goldman Sachs,Investment Banking & Brokerage,302413512704.0,2026-09-08
+PM,Philip Morris International,Tobacco,284493709312.0,2026-09-08
+WFC,Wells Fargo,Diversified Banks,272069214208.0,2026-09-08
+PANW,Palo Alto Networks,Systems Software,271606906880.0,2026-09-08
+RTX,RTX Corporation,Aerospace & Defense,270616330240.0,2026-09-08
+GEV,GE Vernova,Heavy Electrical Equipment,250872922112.0,2026-09-08
+ANET,Arista Networks,Communications Equipment,244400128000.0,2026-09-08
+KLAC,KLA Corporation,Semiconductor Materials & Equipment,242495094784.0,2026-09-08
+AMGN,Amgen,Biotechnology,236380536832.0,2026-09-08
+TXN,Texas Instruments,Semiconductors,236019728384.0,2026-09-08
+C,Citigroup,Diversified Banks,231016595456.0,2026-09-08
+TMO,Thermo Fisher Scientific,Life Sciences Tools & Services,226943500288.0,2026-09-08
