@@ -1,0 +1,9 @@
+strategy_id: sma_crossover_sp500top50
+slippage_bps: 5
+commission_model: alpaca_us_equity
+borrow_cost_bps: 25          # placeholder for liquid large-cap short legs; revisit at Gate 2
+max_position_pct_of_capital: 3
+max_strategy_exposure_pct: 20
+max_portfolio_leverage: 1.0
+kill_switch_drawdown_pct: 8
+train_test_split_date: "2026-07-31"

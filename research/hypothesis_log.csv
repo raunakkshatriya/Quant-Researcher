@@ -1,0 +1,2 @@
+hypothesis_id,source,date_proposed,date_gate_1,is_sharpe,is_max_dd,date_gate_2,oos_sharpe,oos_max_dd,n_hypotheses_tested_before_this,status,notes
+sma_crossover_sp500top50,"Kakushadze & Serur (2018), 151 Trading Strategies, Sec 3.11",2026-09-07,,,,,,,0,proposed,"Long/short single-SMA(T) price crossover; T swept {20,50,100,200} in-sample. Universe = top 50 S&P 500 by market cap, one-time snapshot (survivorship-biased, flagged). Restarted clean 2026-09-07. First Claude Code task: fetch_sp500_constituents()."
