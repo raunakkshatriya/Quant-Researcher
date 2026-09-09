@@ -1,0 +1,2 @@
+run_date,as_of_date,n_oos_trading_days,total_return_pct,sharpe_ratio,sortino_ratio,max_drawdown_pct,win_rate_pct,total_orders,closed_trades,open_trades
+2026-09-09,2026-09-08,26,-0.23205746349838954,-0.2841394136215466,-0.4266174456356701,3.27239548751357,0.0,72,22,50
