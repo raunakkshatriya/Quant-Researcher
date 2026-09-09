@@ -9,3 +9,12 @@ vectorbt==1.1.0
 # Verified: plotly 6.9.0 imports cleanly, plotly 7.0.0 does not.
 plotly==6.9.0
 PyYAML==6.0.3
+# pandas.to_parquet()/read_parquet() (used for price-history caching)
+# needs one of pyarrow or fastparquet -- neither is a hard pandas
+# dependency. This worked in every local/dev environment so far only
+# because something else happened to pull one in as a transitive
+# dependency; a bare CI runner installing only this file does not
+# have that. Confirmed directly: to_parquet() raises ImportError
+# without this line, succeeds with it, in an environment containing
+# nothing but this requirements.txt.
+pyarrow==22.0.0
