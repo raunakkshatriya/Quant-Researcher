@@ -1,20 +1,19 @@
-pandas==3.0.5
-numpy==2.5.3
-pytest==9.1.1
-yfinance==1.7.0
-vectorbt==1.1.0
-# plotly must stay below 7.0 — vectorbt 1.1.0's default template config
-# references a "scattermapbox" trace property that plotly 7.x removed
-# (renamed to "scattermap"), which breaks `import vectorbt` entirely.
-# Verified: plotly 6.9.0 imports cleanly, plotly 7.0.0 does not.
-plotly==6.9.0
-PyYAML==6.0.3
-# pandas.to_parquet()/read_parquet() (used for price-history caching)
-# needs one of pyarrow or fastparquet -- neither is a hard pandas
-# dependency. This worked in every local/dev environment so far only
-# because something else happened to pull one in as a transitive
-# dependency; a bare CI runner installing only this file does not
-# have that. Confirmed directly: to_parquet() raises ImportError
-# without this line, succeeds with it, in an environment containing
-# nothing but this requirements.txt.
-pyarrow==22.0.0
+pandas>=2.2
+numpy>=1.26
+yfinance>=0.2.40
+pyyaml>=6.0
+pytest>=8.0
+statsmodels>=0.14
+quantstats>=0.0.62
+# not required for sma_crossover_sp500top50 specifically, but part of the
+# project's approved stack per CLAUDE.md §4 / quant-researcher-methodology.md
+# -- install as later strategies need them:
+# scikit-learn
+# pandas-ta
+# PyPortfolioOpt
+# Riskfolio-Lib     # risk-parity / commodities cross-asset strategy specifically -- don't install alongside PyPortfolioOpt for the same strategy
+# arch
+# alpaca-py
+# alphalens-reloaded  # cross-sectional momentum / factor-ranking strategy specifically
+# ccxt                # crypto strategy only, once scoped
+# vectorbt / backtrader  # one-off sweep tool only -- see CLAUDE.md §4 maintenance caveats, never the default engine
