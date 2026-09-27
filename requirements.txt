@@ -1,40 +1,37 @@
-pandas>=2.2
-numpy>=1.26
-yfinance>=0.2.40
-pyyaml>=6.0
-pytest>=8.0
+pandas==3.0.5
+numpy==2.5.3
+pytest==9.1.1
+yfinance==1.7.0
+vectorbt==1.1.0
+# plotly must stay below 7.0 — vectorbt 1.1.0's default template config
+# references a "scattermapbox" trace property that plotly 7.x removed
+# (renamed to "scattermap"), which breaks `import vectorbt` entirely.
+# Verified: plotly 6.9.0 imports cleanly, plotly 7.0.0 does not.
+plotly==6.9.0
+PyYAML==6.0.3
+# pandas.to_parquet()/read_parquet() (used for price-history caching)
+# needs one of pyarrow or fastparquet -- neither is a hard pandas
+# dependency. This worked in every local/dev environment so far only
+# because something else happened to pull one in as a transitive
+# dependency; a bare CI runner installing only this file does not
+# have that. Confirmed directly: to_parquet() raises ImportError
+# without this line, succeeds with it, in an environment containing
+# nothing but this requirements.txt.
+pyarrow==22.0.0
 statsmodels>=0.14
 quantstats>=0.0.62
-vectorbt>=0.25,<1.0
-plotly<7
-# Required, not optional: src/backtest/runner.py -- the engine behind every
-# sma_crossover_sp500top50 result (Gate 1 IS windows, the T=200 selection,
-# and the daily OOS ledger) -- imports vectorbt directly. This was missing
-# from requirements.txt (only listed below as an optional sweep tool),
-# which is why the daily_oos_update.yml GitHub Action failed with
-# ModuleNotFoundError on 2026-09-26 even though it worked locally (vectorbt
-# was already installed in the local venv, just never declared here).
-# Capped below 1.0: vectorbt released a 1.x rewrite after this repo's code
-# was written against the 0.x API (vbt.Portfolio.from_orders, cash_sharing)
-# -- do not lift this cap without testing the 1.x API against runner.py
-# first. See CLAUDE.md §4 for the corrected policy.
+# statsmodels/quantstats: not yet imported by any code that currently
+# runs (checked 2026-09-27 -- no hits in src/ or research/). Both are
+# part of the approved stack per CLAUDE.md §4 for work that hasn't been
+# scoped yet (pairs-trading cointegration for statsmodels; per-strategy
+# tearsheets for quantstats). Kept here, not commented out, precisely so
+# this file doesn't repeat the mistake its own history is about: a
+# package that "just happens" to already be installed somewhere, working
+# by accident until a clean environment needs it and it was never
+# declared. Harmless to have installed even while unused.
 #
-# plotly<7 -- added 2026-09-27, second failure in a row on the same
-# dependency. vectorbt's own import (_settings.py -> registering its
-# default plotly theme) references the 'scattermapbox' trace type, which
-# Plotly removed in its 7.x line (renamed to 'scattermap'). vectorbt has
-# not been updated for this. Without this pin, a bare `pip install -r
-# requirements.txt` on a clean machine (e.g. GitHub Actions) resolves the
-# newest plotly (7.x) as an unpinned transitive dependency and crashes on
-# `import vectorbt` before any of our code runs. Verified directly:
-# vectorbt 0.28.5 imports and runs a real Portfolio.from_orders backtest
-# cleanly against plotly 5.24.1 and 6.9.0, crashes against plotly 7.1.0
-# with the exact scattermapbox error. Don't lift this cap without
-# re-testing -- see CLAUDE.md §4's updated maintenance-risk note.
-#
-# The rest of these remain optional -- not required for sma_crossover_sp500top50,
-# part of the project's approved stack per CLAUDE.md §4 / quant-researcher-methodology.md
-# -- install as later strategies need them:
+# Everything below this line really is optional -- not required by
+# anything currently running, install only as later strategies need them:
 # scikit-learn
 # pandas-ta
 # PyPortfolioOpt
