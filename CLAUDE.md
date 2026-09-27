@@ -57,6 +57,8 @@ Anything else: ask in the handoff's self-check rather than installing it unpromp
 
 Every strategy is a self-contained module: its own folder under `research/<strategy_id>/`, its own `backtest_config.yaml` and `risk_and_costs.yaml`, its own paper-trading ledger tagged with `strategy_id`. Shared code (`src/data/`, generic feature utilities) is read-only from any one strategy's perspective — a strategy-specific session never edits shared modules to fit its own needs without that being called out explicitly in the handoff, since a "small" shared-module tweak for strategy B can silently change strategy A's numbers.
 
+- Shared data code is namespaced by asset class: `src/data/equity_us/`, `src/data/fx/`, `src/data/commodities/`, `src/data/crypto/` (each created only when a hypothesis needs it). Each module's docstring states its output schema. A module in one asset-class folder never imports from another's; the only cross-asset dependency allowed is the read-only FX-rate utility. Loaders that existed directly under `src/data/` before 2026-09-27 are frozen legacy code for the SMA snapshot-universe run — don't edit or move them, and don't build new strategies on them. (Added 2026-09-27.)
+
 ## 7. Self-check (end of every session)
 
 Before finishing, add a `## Session self-check` block to the handoff file (or the resume point, if the session ran out of budget first) listing:
