@@ -5,8 +5,21 @@ pyyaml>=6.0
 pytest>=8.0
 statsmodels>=0.14
 quantstats>=0.0.62
-# not required for sma_crossover_sp500top50 specifically, but part of the
-# project's approved stack per CLAUDE.md §4 / quant-researcher-methodology.md
+vectorbt>=0.25,<1.0
+# Required, not optional: src/backtest/runner.py -- the engine behind every
+# sma_crossover_sp500top50 result (Gate 1 IS windows, the T=200 selection,
+# and the daily OOS ledger) -- imports vectorbt directly. This was missing
+# from requirements.txt (only listed below as an optional sweep tool),
+# which is why the daily_oos_update.yml GitHub Action failed with
+# ModuleNotFoundError on 2026-09-26 even though it worked locally (vectorbt
+# was already installed in the local venv, just never declared here).
+# Capped below 1.0: vectorbt released a 1.x rewrite after this repo's code
+# was written against the 0.x API (vbt.Portfolio.from_orders, cash_sharing)
+# -- do not lift this cap without testing the 1.x API against runner.py
+# first. See CLAUDE.md §4 for the corrected policy.
+#
+# The rest of these remain optional -- not required for sma_crossover_sp500top50,
+# part of the project's approved stack per CLAUDE.md §4 / quant-researcher-methodology.md
 # -- install as later strategies need them:
 # scikit-learn
 # pandas-ta
@@ -16,4 +29,4 @@ quantstats>=0.0.62
 # alpaca-py
 # alphalens-reloaded  # cross-sectional momentum / factor-ranking strategy specifically
 # ccxt                # crypto strategy only, once scoped
-# vectorbt / backtrader  # one-off sweep tool only -- see CLAUDE.md §4 maintenance caveats, never the default engine
+# backtrader          # one-off sweep tool only -- see CLAUDE.md §4 maintenance caveats, never the default engine

@@ -23,7 +23,7 @@ Only the files listed under `## Allowed files` in the current handoff. If the ta
 
 Reviewed and refined 2026-09-09/10 against a GitHub survey of what's actively maintained — see the Project chat's `tooling_evaluation_2026-09.md` for the full reasoning behind every entry below.
 
-Core (already in `requirements.txt`, always available): `pandas`, `numpy`, `yfinance`, `pyyaml`, `pytest`, `statsmodels`.
+Core (already in `requirements.txt`, always available): `pandas`, `numpy`, `yfinance`, `pyyaml`, `pytest`, `statsmodels`, `quantstats`, `vectorbt` (pinned `>=0.25,<1.0` — see the correction note at the end of this section before touching it).
 
 Approved — install only when a handoff's specific task needs it, not speculatively:
 - `scikit-learn`, `pandas-ta`, `arch` — general feature/stat work.
@@ -34,12 +34,13 @@ Approved — install only when a handoff's specific task needs it, not speculati
 - `alpaca-py` — paper-trading broker adapter, per §3. This is Alpaca's current official SDK; do not install the older `alpaca-trade-api` package (maintenance mode, superseded).
 - `ccxt` — only once a handoff scopes the optional crypto strategy. The de facto standard unified exchange API. Don't add it before that hypothesis is actually scoped.
 
-Use only if a handoff explicitly calls for it, never as the default backtest engine, and note the maintenance caveat if you do:
-- `vectorbt` (open-source edition) — fast, numba-backed; useful for a one-off wide parameter sweep. Its open-source edition's active development has shifted toward a separate paid "Pro" product, so treat it as a tool for a specific sweep, not a pipeline dependency.
-- `backtrader` — the original repo shows little recent maintenance activity. Don't scaffold new strategies on it. The plain pandas/numpy engine in `src/backtest/runner.py` stays the default, per the auditability reasoning already in this file.
+Use only if a handoff explicitly calls for it, never scaffolded onto a *new* strategy by default:
+- `backtrader` — the original repo shows little recent maintenance activity. Don't scaffold new strategies on it.
 
-Explicitly NOT adopted (checked 2026-09-09, staying hand-rolled — don't re-propose these without a new reason):
-- No backtesting-framework replacement for `src/backtest/runner.py`. Every actively-maintained full platform (zipline-reloaded, NautilusTrader) imposes its own opinionated architecture that costs more of a 64k local-model budget to learn than it saves, and fights this repo's pure-function/schema-first style. Worth knowing about for interview conversations, not for this codebase.
+**Correction, 2026-09-26:** this section previously said `vectorbt` was sweep-only and that "the plain pandas/numpy engine in `src/backtest/runner.py` stays the default." That was never actually true for `sma_crossover_sp500top50` — `runner.py` has imported `vectorbt` (`vbt.Portfolio.from_orders`, cash-sharing) since it was first written, and every number this project has judged (all four Gate 1 IS windows, the T=200 selection, the full daily OOS ledger) was computed on it. The doc just never caught up to the code, and the gap only surfaced when GitHub Actions' clean environment hit a `vectorbt` that was installed locally but never declared in `requirements.txt` (fixed there, now a real pinned dependency, capped `<1.0` since a 1.x rewrite exists and this code was written against the 0.x API).
+
+Given that history, rewriting `runner.py` onto a hand-rolled engine now would put an already-decided Gate 1 result on shakier footing for no real benefit, so `vectorbt` (0.x) is the adopted, required engine for this strategy — not an optional sweep tool. It is not, by this correction, automatically the default for a *new* strategy started from scratch: that's still a real per-strategy choice (a hand-rolled pandas/numpy engine remains simpler to audit and has no maintenance-mode risk), it just isn't the *only* option the way this section previously implied. Every actively-maintained *full platform* (zipline-reloaded, NautilusTrader) is still explicitly not adopted — that's a different, larger thing than the single `vectorbt.Portfolio` engine already in use here, and the reasoning below still holds for those:
+- No full backtesting-framework replacement for `src/backtest/runner.py`'s overall structure. Every actively-maintained full platform imposes its own opinionated architecture that costs more of a 64k local-model budget to learn than it saves, and fights this repo's pure-function/schema-first style. Worth knowing about for interview conversations, not for this codebase.
 - No third-party pairs-trading/cointegration package. That space is almost entirely single-author academic projects, not maintained libraries — inheriting a silent lookahead bug from one is a real risk. Build the cointegration screen the same way `sma_crossover_sp500top50` was built: our own pure function on top of `statsmodels.tsa.stattools.coint` (already approved), our own tests.
 - No hash-chain / audit-log library for the paper-trading ledger (§10). Nothing maintained exists at this scope — the ~15-line `sha256(prev_row_hash + canonical_json(row))` function specified there stays hand-rolled.
 
