@@ -6,6 +6,7 @@ pytest>=8.0
 statsmodels>=0.14
 quantstats>=0.0.62
 vectorbt>=0.25,<1.0
+plotly<7
 # Required, not optional: src/backtest/runner.py -- the engine behind every
 # sma_crossover_sp500top50 result (Gate 1 IS windows, the T=200 selection,
 # and the daily OOS ledger) -- imports vectorbt directly. This was missing
@@ -17,6 +18,19 @@ vectorbt>=0.25,<1.0
 # was written against the 0.x API (vbt.Portfolio.from_orders, cash_sharing)
 # -- do not lift this cap without testing the 1.x API against runner.py
 # first. See CLAUDE.md §4 for the corrected policy.
+#
+# plotly<7 -- added 2026-09-27, second failure in a row on the same
+# dependency. vectorbt's own import (_settings.py -> registering its
+# default plotly theme) references the 'scattermapbox' trace type, which
+# Plotly removed in its 7.x line (renamed to 'scattermap'). vectorbt has
+# not been updated for this. Without this pin, a bare `pip install -r
+# requirements.txt` on a clean machine (e.g. GitHub Actions) resolves the
+# newest plotly (7.x) as an unpinned transitive dependency and crashes on
+# `import vectorbt` before any of our code runs. Verified directly:
+# vectorbt 0.28.5 imports and runs a real Portfolio.from_orders backtest
+# cleanly against plotly 5.24.1 and 6.9.0, crashes against plotly 7.1.0
+# with the exact scattermapbox error. Don't lift this cap without
+# re-testing -- see CLAUDE.md §4's updated maintenance-risk note.
 #
 # The rest of these remain optional -- not required for sma_crossover_sp500top50,
 # part of the project's approved stack per CLAUDE.md §4 / quant-researcher-methodology.md
