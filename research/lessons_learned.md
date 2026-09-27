@@ -223,3 +223,73 @@ accepting a clean-looking pass.
   result (implausible counts, values that don't match hand
   calculation) as something to investigate directly rather than a
   detail to gloss over.
+
+# CI & dependency-drift lessons (2026-09-27)
+
+## The pattern: something works locally, breaks only in a clean environment, and is discovered late
+Four separate failures this week, on `sma_crossover_sp500top50`'s daily
+OOS workflow, all had the same shape: a dependency or an import
+assumption held on the machine that already had it installed (or
+already invoked commands a particular way), and broke the moment a
+genuinely clean environment (GitHub Actions) exercised it:
+- `ModuleNotFoundError: vectorbt` — `src/backtest/runner.py` imports
+  it directly; `requirements.txt` didn't declare it.
+- `vectorbt` import crashing on a `scattermapbox` Plotly trace type
+  Plotly's 7.x line removed — an unpinned transitive dependency
+  resolved to the newest Plotly on a clean install. (Note: this exact
+  incompatibility was already flagged once before, on 2026-09-08 —
+  see the entry above about Task 7's `VBT_DISABLE_PLOT` claim — so
+  this is at least the second time this specific fragility surfaced.)
+- `pandas.to_parquet()` raising `ImportError` for a missing `pyarrow`
+  — not a hard pandas dependency, worked locally only because
+  something else pulled it in as a transitive package.
+- `ModuleNotFoundError: No module named 'src'` in `pytest -q` — local
+  test runs (`python -m pytest`, or an editor's runner) add the repo
+  root to the import path automatically; plain `pytest -q`, which is
+  what CI runs, does not.
+
+## The real root cause of three of the four: a Project-chat overwrite, not three new bugs
+Claude Code had already correctly diagnosed and fixed the `vectorbt`/
+`plotly` incompatibility *and* the `pyarrow` gap, in two commits on
+2026-09-09 (`602a203`, `b99b8fb`) — pinning exact versions
+(`vectorbt==1.1.0`, `plotly==6.9.0`, `pyarrow==22.0.0`). The Project
+chat then overwrote `requirements.txt` wholesale from its own stale
+draft (commit `91a860e`, "Sync tooling policy") without reading the
+live file first, silently deleting both fixes. The next three CI/
+scheduled-workflow runs failed one at a time as the Project chat
+re-discovered — with a wrong guess along the way (assuming `vectorbt`
+was still on a 0.x API and capping it `<1.0`, when `1.1.0` was already
+verified and in use) — fixes that already existed before it touched
+the file.
+
+**Standing rule, now in `CLAUDE.md` §4:** before replacing any shared
+file (`requirements.txt`, `CLAUDE.md`, any config both sides touch)
+wholesale, read the live version from the repo first. A local Claude
+Code session may have already fixed something the Project chat
+doesn't know about; a blind overwrite deletes it silently, with no
+error until the next CI or scheduled run.
+
+## What actually changed as a result
+- Added `.github/workflows/ci_tests.yml`: installs `requirements.txt`
+  fresh and runs the full `pytest` suite on every push to `main` (and
+  on `pull_request`, and via manual dispatch) — not just on
+  `daily_oos_update.yml`'s once-a-day schedule. This is the structural
+  fix: a broken dependency or import now surfaces within about a
+  minute of committing, in the commit's own CI status, instead of up
+  to a day later inside a scheduled job nobody is watching in real
+  time. It also means every *future* strategy's new dependencies get
+  the same check automatically, with no bespoke test to write per
+  strategy — it rides on whatever test file `CLAUDE.md` §5 already
+  requires for new signal/money-math code.
+- Added `pytest.ini` (`[pytest]` / `pythonpath = .`) so `pytest -q`
+  resolves `src.*` imports identically to however local runs already
+  worked, removing the local/CI invocation-style gap entirely.
+- Verified the new CI workflow actually fails on a real problem (not
+  just passes when everything's fine): pushed a throwaway test file
+  containing one deliberately-failing assertion, confirmed the Actions
+  tab showed a red status with that exact assertion in the log, then
+  deleted the file and confirmed it went green again. Worth repeating
+  this drill once after any future change to the CI workflow itself
+  (not for every ordinary code change) — a CI check that has never
+  been seen to fail is unverified, however reassuring a string of
+  green runs looks.
