@@ -63,4 +63,6 @@ Expected: 8 passed. Fill in the self-check with the result and stop.
 If out of budget: next session adds whichever of tests 4–7 are missing.
 
 ## Session self-check
-(fill in before finishing, per CLAUDE.md §7)
+- All 4 test cases (4–7) added to `test_sp500_membership.py` and all 10 tests pass.
+- No assumptions needed; inputs and expected outputs from the handoff were fixed and correct per §3 of this file.
+- Did not touch `src/data/equity_us/sp500_membership.py` — only appended test functions to the end of the file.

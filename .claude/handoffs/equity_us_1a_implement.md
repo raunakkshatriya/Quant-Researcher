@@ -76,4 +76,9 @@ Then fill in the self-check and stop.
 If out of budget: the file exists but may be incomplete — the next session finishes step 5 only.
 
 ## Session self-check
-(fill in before finishing, per CLAUDE.md §7)
+
+**Assumptions made:** None — the steps were followed exactly as written.
+
+**Import check output:** `import ok`
+
+**Nothing uncertain.**

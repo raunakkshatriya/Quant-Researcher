@@ -52,6 +52,7 @@ Anything else: ask in the handoff's self-check rather than installing it unpromp
 - Every function that produces a trading signal or touches money math gets a test file in the mirrored `tests/` path, covering at minimum: the normal case, an insufficient-history/edge case, and a case with a data gap (missing day, NaN price).
 - Docstrings state the exact input and output schema (columns, types, index) — this should match what the handoff's `## Input schema` / `## Output schema` sections said going in; if it doesn't match, that's something to flag, not silently reconcile.
 - When rewriting a function that already exists, comment out the previous version directly above or below the new one rather than deleting it — mark it clearly, e.g. `# --- SUPERSEDED 2026-09-27, replaced by the version below ---`, so which version is actually active is never ambiguous. This is local, in-file history readable without a git command, on top of (not instead of) git commits — decided 2026-09-27, see `research/lessons_learned.md`. If a file's accumulated superseded code starts meaningfully eating into a session's budget, flag it in the self-check (§7) as a candidate for the Project chat to prune to git-only history — don't silently delete it yourself.
+- Never silently fix bad data. No `errors="coerce"`, no `fillna`/`dropna` on inputs, no skipping unparseable rows unless a handoff explicitly asks for it. Data and feature functions validate their inputs (dtypes, missing values, blank keys) and raise `ValueError` with a clear message. Bad data that fails loudly gets fixed at its source; bad data that's silently patched corrupts every result downstream. (Added 2026-09-27.)
 
 ## 6. Strategy isolation
 
@@ -85,6 +86,8 @@ The daily paper-trading writer (`reports/paper_trading_log/<strategy_id>_daily.p
 ## 11. What "done" looks like for a session
 
 Tests pass locally (`pytest` for whatever you touched), the handoff's self-check is filled in, and the commit message names the `hypothesis_id`/module touched. Nothing here should require judgment about strategy design — if it starts to, that's the signal to stop and flag it rather than push through.
+
+Expected values in tests are fixed by the handoff. If a test fails, never edit its expected value (or loosen its assertion) to make it pass — report the failing test and the error in the self-check and stop. Don't create scratch or debug scripts; if you need one, that's a sign the task is too big, and it belongs in the self-check. (Added 2026-09-27, see `research/lessons_learned.md`.)
 
 ## 12. Third-party Claude skills and plugins
 

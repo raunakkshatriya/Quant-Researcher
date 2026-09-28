@@ -88,4 +88,4 @@ Fill in the self-check with the pass/fail result and stop.
 If out of budget: next session adds whichever of tests 1, 1b, 2, 3 are missing.
 
 ## Session self-check
-(fill in before finishing, per CLAUDE.md §7)
+All 4 test cases passed (`test_normal_case`, `test_output_columns_and_dtypes`, `test_removed_then_readded`, `test_changes_outside_window_ignored`). No ambiguities or assumptions required; the implementation matches expected outputs exactly.

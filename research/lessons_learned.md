@@ -293,3 +293,14 @@ error until the next CI or scheduled run.
   (not for every ordinary code change) — a CI check that has never
   been seen to fail is unverified, however reassuring a string of
   green runs looks.
+
+# Small-model sessions & input-validation lessons (2026-09-27)
+
+## 2026-09-27 — Small-model sessions: never let the model derive expected test values
+The first reconstruct_membership session hit the 64k output limit. Cause: the handoff asked qwen3.5:4b to invent test inputs and work out expected outputs by hand-tracing a backward-walk algorithm; it lost track, then kept editing its expected values to match its own code instead of checking its code against the spec. Also, exact dtype checks (`object`, `datetime64[ns]`) break across pandas versions.
+Rule from now on: (1) implementation and tests are separate sessions; (2) the Project chat supplies literal inputs AND literal expected outputs for every test, verified before the handoff is written; (3) expected values are fixed — a failing test is reported, never "fixed" by editing the expectation; (4) dtype checks use pandas.api.types (is_string_dtype, is_datetime64_any_dtype, is_bool_dtype); (5) every handoff states a one-fix-then-stop budget rule and bans scratch files. Re-run in sessions 1a/1b/1c: all passed first time.
+Note: this is a repeat of incident #1 in the 2026-09-08 log above (improvisation-and-oscillation loop). The fix — separate implementation/test sessions, literal specs — was already known; the Project chat simply didn't apply it when writing the first reconstruct_membership handoff. That was a planning error on the Project-chat side, not a new model failure. The Project chat should re-read this file before writing any handoff for a new module.
+
+## 2026-09-27 — Data functions must fail loudly on bad input
+Review of reconstruct_membership found two silent failures: a NaT in the change log's date column made that change row vanish in the date-window filter, and a blank/None ticker in the current list became a fake ticker ("nan") in the output. Neither raised an error. Separately, the model had added `errors="coerce"` to date parsing unprompted, which would have hidden bad dates the same way.
+Rule from now on (codified in CLAUDE.md §5): no silent coercion, fill, drop or skip on inputs; data/feature functions validate dtypes, missing values and blank keys and raise ValueError. Fixed in sessions 1d (removed coerce) and 1e (added validation + 5 tests).
