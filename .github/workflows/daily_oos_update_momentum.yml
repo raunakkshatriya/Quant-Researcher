@@ -1,0 +1,41 @@
+name: Daily OOS Ledger Update — momentum_12_1_sp500top50
+
+# Twin of daily_oos_update.yml (SMA), same 50 stocks. Extends the forward
+# OUT-OF-SAMPLE backtest from 2026-08-01 by one real trading day at a time.
+# NOT live paper trading (no Alpaca integration yet).
+
+on:
+  schedule:
+    # 22:30 UTC — 30 minutes after the SMA job, so the two never try to
+    # push to main at the same moment.
+    - cron: "30 22 * * 1-5"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run OOS ledger update
+        run: python research/momentum_12_1_sp500top50/update_oos_ledger.py
+
+      - name: Commit updated ledger (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add research/momentum_12_1_sp500top50/oos_ledger.csv
+          git diff --staged --quiet && exit 0
+          git commit -m "oos-ledger: $(date -u +%Y-%m-%d) update for momentum_12_1_sp500top50"
+          git pull --rebase
+          git push

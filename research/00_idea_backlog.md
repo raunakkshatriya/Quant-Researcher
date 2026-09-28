@@ -6,10 +6,10 @@ for the link) — see `quant-project-clarifications.md` §9 for the
 methodology decisions made alongside this seeding.
 
 ## In progress
+- `momentum_12_1_sp500top50` (Stage A) — cross-sectional 12-1 momentum on the same 50 stocks as the SMA baseline, with its own daily OOS ledger; proposed 2026-09-28. See `research/momentum_12_1_sp500top50/`.
 - `sma_crossover_sp500top50` (Stage A) — implemented 2026-09-09, IS backtest not yet run locally. See `research/sma_crossover_sp500top50/`.
 
 ## Queued, in the job-market scan's priority order
-- [ ] Cross-sectional equity momentum / factor ranking — extends the SMA-crossover work; matches the most-requested skill across postings.
 - [ ] Statistical arbitrage / cointegrated pairs — abstraction already specced in `quant-project-clarifications.md` §Q16 (cointegration test, spread z-score, pair-as-one-position ledger).
 - [ ] Sector rotation / relative strength — grouping layer over the momentum signal; needs the pivoted (date × ticker) view per `PROJECT_INSTRUCTIONS.md`.
 - [ ] Commodities & cross-asset trend-following / risk parity — direct match to a live Neuberger Berman posting found in the scan; needs continuous-futures roll handling (open question, not yet resolved).

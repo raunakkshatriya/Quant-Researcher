@@ -1,0 +1,18 @@
+{
+  "strategy_id": "momentum_12_1_sp500top50",
+  "formation_months": 12,
+  "skip_days": 21,
+  "n_long": 5,
+  "n_short": 5,
+  "in_sample_start": "2016-01-01",
+  "in_sample_end": "2023-12-31",
+  "n_tickers_with_data": 49,
+  "total_return_pct": -20.82704167824753,
+  "benchmark_return_pct": 579.0021720027503,
+  "sharpe_ratio": -0.11194232982328631,
+  "sortino_ratio": -0.1521958677725934,
+  "max_drawdown_pct": 41.06167647039029,
+  "win_rate_pct": 53.58255451713395,
+  "total_trades": 652,
+  "total_orders": 1208
+}

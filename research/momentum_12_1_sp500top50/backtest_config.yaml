@@ -1,0 +1,18 @@
+# Documentation of the settings used by run_is_exploration.py and
+# update_oos_ledger.py (the scripts hold the same values as constants,
+# following the sma_crossover_sp500top50 pattern).
+strategy_id: momentum_12_1_sp500top50
+source: "Jegadeesh & Titman (1993), Returns to Buying Winners and Selling Losers"
+universe_file: research/sma_crossover_sp500top50/universe_snapshot.csv   # shared with the SMA baseline
+price_field: adj_close
+formation_months_grid: [3, 6, 9, 12]
+primary_formation_months: 12
+days_per_month: 21
+skip_days: 21
+holding: one month, rebalance on the last trading day of each month
+n_long: 5
+n_short: 5
+weight_per_position: 0.10
+in_sample: {start: "2016-01-01", end: "2023-12-31"}
+holdout: {start: "2024-01-01", end: "2026-07-31"}
+forward_oos_start: "2026-08-01"
