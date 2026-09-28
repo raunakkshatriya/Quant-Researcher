@@ -15,6 +15,9 @@ Only the files listed under `## Allowed files` in the current handoff. If the ta
 ## 3. Data & broker policy
 
 - Default data sources: `yfinance`, OpenBB, `edgartools` — all free, no keys required for the free tiers used here.
+- Free sources only (decided 2026-09-28): this is an independent-study project with no WRDS/CRSP, Bloomberg, Norgate or any other paid or institutional feed. Don't propose one.
+- Point-in-time S&P 500 membership comes from SEC Form N-PORT holdings of an S&P 500 index fund (IVV), read via `edgartools` — quarterly snapshots, 2019 onward. Wikipedia's S&P 500 pages are a cross-check only, never the primary source. Raw source files (N-PORT XML, Wikipedia HTML) are saved under `data/reference/` and committed; parsers read the saved copy, never the live page, so every result can be reproduced without re-downloading.
+- SEC requests identify the user through the `EDGAR_IDENTITY` environment variable, set in the terminal session only. Never write a name or email into code, config, or any committed file.
 - Default broker/execution: Alpaca (`alpaca-py`), paper account.
 - Do not add an IBKR (`ib_async`) code path, and do not propose one, unless a handoff explicitly asks for it. When it does, IBKR is a swapped execution/data adapter behind the existing broker-agnostic strategy interface — never a rewrite of the strategy's own logic.
 - Network calls belong in `src/data/` modules only (loaders, universe snapshots, broker adapters). Feature and backtest code (`src/features/`, `src/backtest/`) must be pure functions of the DataFrames they're given — no network calls, no wall-clock reads (`datetime.now()`) inside a backtest path. This is what makes those modules unit-testable without a network connection and safe from the lookahead risk in §8.
@@ -23,7 +26,7 @@ Only the files listed under `## Allowed files` in the current handoff. If the ta
 
 Reviewed and refined 2026-09-09/10 against a GitHub survey of what's actively maintained — see the Project chat's `tooling_evaluation_2026-09.md` for the full reasoning behind every entry below.
 
-Core (already in `requirements.txt`, always available): `pandas`, `numpy`, `yfinance`, `pyyaml`, `pytest`, `statsmodels`, `quantstats`, `vectorbt==1.1.0` (exact pin, alongside exact pins on `plotly==6.9.0` and `pyarrow==22.0.0` — see the correction note at the end of this section before touching any of these three).
+Core (already in `requirements.txt`, always available): `pandas`, `numpy`, `yfinance`, `pyyaml`, `pytest`, `statsmodels`, `quantstats`, `lxml`, `requests`, `edgartools` (exact pins in `requirements.txt`), `vectorbt==1.1.0` (exact pin, alongside exact pins on `plotly==6.9.0` and `pyarrow==22.0.0` — see the correction note at the end of this section before touching any of these three).
 
 Approved — install only when a handoff's specific task needs it, not speculatively:
 - `scikit-learn`, `pandas-ta`, `arch` — general feature/stat work.
